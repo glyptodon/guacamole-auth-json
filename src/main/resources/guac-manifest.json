@@ -1,0 +1,16 @@
+{
+
+    "guacamoleVersion" : "0.9.8",
+
+    "name"      : "Encrypted JSON Authentication",
+    "namespace" : "guac-json",
+
+    "authProviders" : [
+        "org.glyptodon.guacamole.auth.json.JSONAuthenticationProvider"
+    ],
+
+    "translations" : [
+        "translations/en.json"
+    ]
+
+}
