@@ -57,7 +57,7 @@ public class UserData {
      *
      * @author Michael Jumper
      */
-    public class Connection {
+    public static class Connection {
 
         /**
          * The protocol that this connection should use, such as "vnc" or "rdp".
