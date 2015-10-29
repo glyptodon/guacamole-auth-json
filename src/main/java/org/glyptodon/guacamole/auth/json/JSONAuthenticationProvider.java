@@ -43,11 +43,6 @@ import org.glyptodon.guacamole.net.auth.UserContext;
 public class JSONAuthenticationProvider implements AuthenticationProvider {
 
     /**
-     * The identifier reserved for the root connection group.
-     */
-    public static final String ROOT_CONNECTION_GROUP = "ROOT";
-
-    /**
      * Injector which will manage the object graph of this authentication
      * provider.
      */
