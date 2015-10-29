@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import org.glyptodon.guacamole.net.auth.Connection;
 import org.glyptodon.guacamole.net.auth.ConnectionGroup;
+import org.glyptodon.guacamole.net.auth.Credentials;
 import org.glyptodon.guacamole.net.auth.Directory;
 import org.glyptodon.guacamole.net.auth.User;
 import org.glyptodon.guacamole.net.auth.simple.SimpleConnection;
@@ -48,6 +49,27 @@ public class UserDataService {
      * The identifier reserved for the root connection group.
      */
     public static final String ROOT_CONNECTION_GROUP = "ROOT";
+
+    /**
+     * Derives a new UserData object from the data contained within the given
+     * Credentials. If no such data is present, or the data present is invalid,
+     * null is returned.
+     *
+     * @param credentials
+     *     The Credentials from which the new UserData object should be
+     *     derived.
+     *
+     * @return
+     *     A new UserData object derived from the data contained within the
+     *     given Credentials, or null if no such data is present or if the data
+     *     present is invalid.
+     */
+    public UserData fromCredentials(Credentials credentials) {
+
+        // STUB
+        return new UserData();
+        
+    }
 
     /**
      * Returns the identifiers of all users readable by the user whose data is

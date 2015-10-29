@@ -27,11 +27,11 @@ import com.google.inject.Provider;
 import org.glyptodon.guacamole.auth.json.user.AuthenticatedUser;
 import org.glyptodon.guacamole.auth.json.user.UserContext;
 import org.glyptodon.guacamole.GuacamoleException;
+import org.glyptodon.guacamole.auth.json.user.UserData;
+import org.glyptodon.guacamole.auth.json.user.UserDataService;
 import org.glyptodon.guacamole.net.auth.Credentials;
 import org.glyptodon.guacamole.net.auth.credentials.CredentialsInfo;
 import org.glyptodon.guacamole.net.auth.credentials.GuacamoleInvalidCredentialsException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Service providing convenience functions for the JSONAuthenticationProvider.
@@ -41,16 +41,10 @@ import org.slf4j.LoggerFactory;
 public class AuthenticationProviderService {
 
     /**
-     * Logger for this class.
-     */
-    private final Logger logger = LoggerFactory.getLogger(AuthenticationProviderService.class);
-
-    /**
-     * Service for retrieving configuration information related to the
-     * JSONAuthenticationProvider.
+     * Service for deriving Guacamole extension API data from UserData objects.
      */
     @Inject
-    private ConfigurationService confService;
+    private UserDataService userDataService;
 
     /**
      * Provider for AuthenticatedUser objects.
@@ -82,8 +76,15 @@ public class AuthenticationProviderService {
     public AuthenticatedUser authenticateUser(Credentials credentials)
             throws GuacamoleException {
 
-        // STUB
-        throw new GuacamoleInvalidCredentialsException("Permission denied.", CredentialsInfo.USERNAME_PASSWORD);
+        // Pull UserData from credentials, if possible
+        UserData userData = userDataService.fromCredentials(credentials);
+        if (userData == null)
+            throw new GuacamoleInvalidCredentialsException("Permission denied.", CredentialsInfo.EMPTY);
+
+        // Produce AuthenticatedUser associated with derived UserData
+        AuthenticatedUser authenticatedUser = authenticatedUserProvider.get();
+        authenticatedUser.init(credentials, userData);
+        return authenticatedUser;
 
     }
 
@@ -104,8 +105,16 @@ public class AuthenticationProviderService {
     public UserContext getUserContext(org.glyptodon.guacamole.net.auth.AuthenticatedUser authenticatedUser)
             throws GuacamoleException {
 
-        // STUB
-        return null;
+        // The JSONAuthenticationProvider only provides data for users it has
+        // authenticated itself
+        if (!(authenticatedUser instanceof AuthenticatedUser))
+            return null;
+
+        // Return UserContext containing data from the authenticated user's
+        // associated UserData object
+        UserContext userContext = userContextProvider.get();
+        userContext.init(((AuthenticatedUser) authenticatedUser).getUserData());
+        return userContext;
 
     }
 
