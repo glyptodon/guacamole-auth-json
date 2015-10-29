@@ -22,10 +22,13 @@
 
 package org.glyptodon.guacamole.auth.json.user;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.glyptodon.guacamole.net.auth.Connection;
 import org.glyptodon.guacamole.net.auth.ConnectionGroup;
 import org.glyptodon.guacamole.net.auth.Credentials;
@@ -37,6 +40,8 @@ import org.glyptodon.guacamole.net.auth.simple.SimpleConnectionGroupDirectory;
 import org.glyptodon.guacamole.net.auth.simple.SimpleDirectory;
 import org.glyptodon.guacamole.net.auth.simple.SimpleUser;
 import org.glyptodon.guacamole.protocol.GuacamoleConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service for deriving Guacamole extension API data from UserData objects.
@@ -46,9 +51,24 @@ import org.glyptodon.guacamole.protocol.GuacamoleConfiguration;
 public class UserDataService {
 
     /**
+     * Logger for this class.
+     */
+    private final Logger logger = LoggerFactory.getLogger(UserDataService.class);
+
+    /**
+     * ObjectMapper for deserializing UserData objects.
+     */
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    /**
      * The identifier reserved for the root connection group.
      */
     public static final String ROOT_CONNECTION_GROUP = "ROOT";
+
+    /**
+     * The name of the HTTP parameter from which JSON data should be read.
+     */
+    public static final String JSON_DATA_PARAMETER = "data";
 
     /**
      * Derives a new UserData object from the data contained within the given
@@ -66,9 +86,28 @@ public class UserDataService {
      */
     public UserData fromCredentials(Credentials credentials) {
 
-        // STUB
-        return new UserData();
-        
+        // Pull HTTP request, if available
+        HttpServletRequest request = credentials.getRequest();
+        if (request == null)
+            return null;
+
+        // Pull JSON data from HTTP request, if any such data is present
+        String json = request.getParameter(JSON_DATA_PARAMETER);
+        if (json == null)
+            return null;
+
+        // Deserialize UserData from submitted JSON data
+        try {
+            return mapper.readValue(json, UserData.class);
+        }
+
+        // Fail UserData creation if JSON is invalid/unreadable
+        catch (IOException e) {
+            logger.error("Received JSON is invalid: {}", e.getMessage());
+            logger.debug("Error parsing UserData JSON.", e);
+            return null;
+        }
+
     }
 
     /**
