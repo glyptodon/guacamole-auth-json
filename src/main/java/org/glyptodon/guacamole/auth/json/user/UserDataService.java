@@ -23,11 +23,13 @@
 package org.glyptodon.guacamole.auth.json.user;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.bind.DatatypeConverter;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.glyptodon.guacamole.net.auth.Connection;
 import org.glyptodon.guacamole.net.auth.ConnectionGroup;
@@ -66,7 +68,8 @@ public class UserDataService {
     public static final String ROOT_CONNECTION_GROUP = "ROOT";
 
     /**
-     * The name of the HTTP parameter from which JSON data should be read.
+     * The name of the HTTP parameter from which base64-encoded JSON data
+     * should be read.
      */
     public static final String JSON_DATA_PARAMETER = "data";
 
@@ -91,10 +94,34 @@ public class UserDataService {
         if (request == null)
             return null;
 
-        // Pull JSON data from HTTP request, if any such data is present
-        String json = request.getParameter(JSON_DATA_PARAMETER);
-        if (json == null)
+        // Pull base64-encoded JSON data from HTTP request, if any such data is
+        // present
+        String base64 = request.getParameter(JSON_DATA_PARAMETER);
+        if (base64 == null)
             return null;
+
+        // Convert parameter from base64
+        String json;
+        try {
+            json = new String(
+                DatatypeConverter.parseBase64Binary(base64),
+                "UTF-8"
+            );
+        }
+
+        // Fail if base64 data is not valid
+        catch (IllegalArgumentException e) {
+            logger.warn("Submitted data is not proper base64.");
+            logger.debug("Invalid base64 data.", e);
+            return null;
+        }
+
+        // Handle lack of standard UTF-8 support (should never happen)
+        catch (UnsupportedEncodingException e) {
+            logger.error("Unexpected lack of support for UTF-8: {}", e.getMessage());
+            logger.debug("Unable to decode base64 data as UTF-8.", e);
+            return null;
+        }
 
         // Deserialize UserData from submitted JSON data
         try {
