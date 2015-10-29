@@ -43,7 +43,7 @@ public class UserData {
      * This is a UNIX-style epoch timestamp, stored as the number of
      * milliseconds since midnight of January 1, 1970 UTC.
      */
-    private long expires;
+    private Long expires;
 
     /**
      * All connections accessible by this user. The key of each entry is both
@@ -153,13 +153,13 @@ public class UserData {
      * Returns the time after which the data stored in this object is invalid
      * and must not be used. The time returned is a UNIX-style epoch timestamp
      * whose value is the number of milliseconds since midnight of January 1,
-     * 1970 UTC.
+     * 1970 UTC. If this object does not expire, null is returned.
      *
      * @return
      *     The time after which the data stored in this object is invalid and
-     *     must not be used.
+     *     must not be used, or null if this object does not expire.
      */
-    public long getExpires() {
+    public Long getExpires() {
         return expires;
     }
 
@@ -167,13 +167,14 @@ public class UserData {
      * Sets the time after which the data stored in this object is invalid
      * and must not be used. The time provided MUST be a UNIX-style epoch
      * timestamp whose value is the number of milliseconds since midnight of
-     * January 1, 1970 UTC.
+     * January 1, 1970 UTC. If this object should not expire, the value
+     * provided should be null.
      *
      * @param expires
      *     The time after which the data stored in this object is invalid and
-     *     must not be used.
+     *     must not be used, or null if this object does not expire.
      */
-    public void setExpires(long expires) {
+    public void setExpires(Long expires) {
         this.expires = expires;
     }
 
@@ -218,7 +219,15 @@ public class UserData {
      */
     @JsonIgnore
     public boolean isExpired() {
-        return System.currentTimeMillis() > getExpires();
+
+        // Do not bother comparing if this UserData object does not expire
+        Long expirationTimestamp = getExpires();
+        if (expirationTimestamp == null)
+            return false;
+
+        // Otherwise, compare expiration timestamp against system time
+        return System.currentTimeMillis() > expirationTimestamp;
+
     }
 
 }
