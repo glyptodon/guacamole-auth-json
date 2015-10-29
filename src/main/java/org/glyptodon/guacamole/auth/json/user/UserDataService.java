@@ -125,7 +125,14 @@ public class UserDataService {
 
         // Deserialize UserData from submitted JSON data
         try {
-            return mapper.readValue(json, UserData.class);
+
+            // Deserialize UserData, but reject if expired
+            UserData userData = mapper.readValue(json, UserData.class);
+            if (userData.isExpired())
+                return null;
+
+            return userData;
+
         }
 
         // Fail UserData creation if JSON is invalid/unreadable
