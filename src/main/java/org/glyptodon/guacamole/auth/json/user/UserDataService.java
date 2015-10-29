@@ -278,12 +278,19 @@ public class UserDataService {
             if (parameters != null)
                 config.setParameters(parameters);
 
-            // Add corresponding Connection to directory
-            directoryContents.put(identifier, new SimpleConnection(
+            // Create Guacamole connection containing the defined identifier
+            // and parameters
+            Connection guacConnection = new SimpleConnection(
                 identifier,
                 identifier,
                 config
-            ));
+            );
+
+            // All connections are within the root group
+            guacConnection.setParentIdentifier(ROOT_CONNECTION_GROUP);
+
+            // Add corresponding Connection to directory
+            directoryContents.put(identifier, guacConnection);
 
         }
 
