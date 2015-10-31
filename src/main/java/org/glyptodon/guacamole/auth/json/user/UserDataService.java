@@ -22,6 +22,7 @@
 
 package org.glyptodon.guacamole.auth.json.user;
 
+import com.google.inject.Inject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
@@ -31,6 +32,9 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.DatatypeConverter;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.glyptodon.guacamole.GuacamoleException;
+import org.glyptodon.guacamole.auth.json.ConfigurationService;
+import org.glyptodon.guacamole.auth.json.CryptoService;
 import org.glyptodon.guacamole.net.auth.Connection;
 import org.glyptodon.guacamole.net.auth.ConnectionGroup;
 import org.glyptodon.guacamole.net.auth.Credentials;
@@ -63,15 +67,28 @@ public class UserDataService {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     /**
+     * Service for retrieving configuration information regarding the
+     * JSONAuthenticationProvider.
+     */
+    @Inject
+    private ConfigurationService confService;
+
+    /**
+     * Service for handling cryptography-related operations.
+     */
+    @Inject
+    private CryptoService cryptoService;
+
+    /**
      * The identifier reserved for the root connection group.
      */
     public static final String ROOT_CONNECTION_GROUP = "ROOT";
 
     /**
-     * The name of the HTTP parameter from which base64-encoded JSON data
-     * should be read.
+     * The name of the HTTP parameter from which base64-encoded, encrypted JSON
+     * data should be read.
      */
-    public static final String JSON_DATA_PARAMETER = "data";
+    public static final String ENCRYPTED_DATA_PARAMETER = "data";
 
     /**
      * Derives a new UserData object from the data contained within the given
@@ -94,19 +111,25 @@ public class UserDataService {
         if (request == null)
             return null;
 
-        // Pull base64-encoded JSON data from HTTP request, if any such data is
-        // present
-        String base64 = request.getParameter(JSON_DATA_PARAMETER);
+        // Pull base64-encoded, encrypted JSON data from HTTP request, if any
+        // such data is present
+        String base64 = request.getParameter(ENCRYPTED_DATA_PARAMETER);
         if (base64 == null)
             return null;
 
-        // Convert parameter from base64
+        // Decrypt base64-encoded parameter
         String json;
         try {
-            json = new String(
-                DatatypeConverter.parseBase64Binary(base64),
-                "UTF-8"
+
+            // Decrypt using defined encryption key
+            byte[] decrypted = cryptoService.decrypt(
+                confService.getEncryptionKey(),
+                DatatypeConverter.parseBase64Binary(base64)
             );
+
+            // Convert from UTF-8
+            json = new String(decrypted, "UTF-8");
+
         }
 
         // Fail if base64 data is not valid
@@ -120,6 +143,13 @@ public class UserDataService {
         catch (UnsupportedEncodingException e) {
             logger.error("Unexpected lack of support for UTF-8: {}", e.getMessage());
             logger.debug("Unable to decode base64 data as UTF-8.", e);
+            return null;
+        }
+
+        // Fail if decryption or key retrieval fails for any reason
+        catch (GuacamoleException e) {
+            logger.error("Decryption of received data failed: {}", e.getMessage());
+            logger.debug("Unable to decrypt received data.", e);
             return null;
         }
 
