@@ -22,17 +22,17 @@
 
 package org.glyptodon.guacamole.auth.json;
 
-import java.io.UnsupportedEncodingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
 import org.glyptodon.guacamole.GuacamoleException;
 import org.glyptodon.guacamole.GuacamoleServerException;
 import org.glyptodon.guacamole.properties.GuacamoleProperty;
 
 /**
  * A GuacamoleProperty whose value is a SecretKey. The key will be generated
- * using the AES key generation algorithm from the UTF-8 bytes of the value of
- * the property.
+ * using the AES key generation algorithm from the decoded bytes of the hex-
+ * encoded value of the property.
  *
  * @author Michael Jumper
  */
@@ -52,17 +52,17 @@ public abstract class SecretKeyProperty implements GuacamoleProperty<SecretKey> 
 
         try {
 
-            // Read value as UTF-8
-            byte[] keyBytes = value.getBytes("UTF-8");
+            // Read value as hex
+            byte[] keyBytes = DatatypeConverter.parseHexBinary(value);
 
             // Return parsed key
             return new SecretKeySpec(keyBytes, KEY_ALGORITHM);
 
         }
 
-        // Handle impossible lack of support for UTF-8
-        catch (UnsupportedEncodingException e) {
-            throw new GuacamoleServerException(e);
+        // Fail parse if hex invalid
+        catch (IllegalArgumentException e) {
+            throw new GuacamoleServerException("Invalid hexadecimal value for key.", e);
         }
 
     }
