@@ -22,52 +22,49 @@
 
 package org.glyptodon.guacamole.auth.json;
 
-import com.google.inject.Inject;
+import java.io.UnsupportedEncodingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import org.glyptodon.guacamole.GuacamoleException;
-import org.glyptodon.guacamole.environment.Environment;
+import org.glyptodon.guacamole.GuacamoleServerException;
+import org.glyptodon.guacamole.properties.GuacamoleProperty;
 
 /**
- * Service for retrieving configuration information regarding the JSON
- * authentication provider.
+ * A GuacamoleProperty whose value is a SecretKey. The key will be generated
+ * using the AES key generation algorithm from the UTF-8 bytes of the value of
+ * the property.
  *
  * @author Michael Jumper
  */
-public class ConfigurationService {
+public abstract class SecretKeyProperty implements GuacamoleProperty<SecretKey> {
 
     /**
-     * The Guacamole server environment.
+     * The name of the key generation algorithm used by this property.
      */
-    @Inject
-    private Environment environment;
+    public static final String KEY_ALGORITHM = "AES";
 
-    /**
-     * The encryption key to use for all decryption.
-     */
-    private static final SecretKeyProperty JSON_ENCRYPTION_KEY = new SecretKeyProperty() {
+    @Override
+    public SecretKey parseValue(String value) throws GuacamoleException {
 
-        @Override
-        public String getName() {
-            return "json-encryption-key";
+        // If no property provided, return null.
+        if (value == null)
+            return null;
+
+        try {
+
+            // Read value as UTF-8
+            byte[] keyBytes = value.getBytes("UTF-8");
+
+            // Return parsed key
+            return new SecretKeySpec(keyBytes, KEY_ALGORITHM);
+
         }
 
-    };
+        // Handle impossible lack of support for UTF-8
+        catch (UnsupportedEncodingException e) {
+            throw new GuacamoleServerException(e);
+        }
 
-    /**
-     * Returns the symmetric encryption key which will be used to encrypt all
-     * JSON data and should be used to decrypt any received JSON data. This is
-     * dictated by the "json-encryption-key" property specified within
-     * guacamole.properties.
-     *
-     * @return
-     *     The key which should be used to decrypt received JSON data.
-     *
-     * @throws GuacamoleException
-     *     If guacamole.properties cannot be parsed, or if the
-     *     "json-encryption-key" property is missing.
-     */
-    public SecretKey getEncryptionKey() throws GuacamoleException {
-        return environment.getRequiredProperty(JSON_ENCRYPTION_KEY);
     }
 
 }
