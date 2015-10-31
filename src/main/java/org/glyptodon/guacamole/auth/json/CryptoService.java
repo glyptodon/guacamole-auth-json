@@ -29,6 +29,7 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
@@ -45,6 +46,11 @@ import org.glyptodon.guacamole.GuacamoleServerException;
 public class CryptoService {
 
     /**
+     * The length of all signatures, in bytes.
+     */
+    public static final int SIGNATURE_LENGTH = 32;
+
+    /**
      * The name of the key generation algorithm used for decryption.
      */
     private static final String DECRYPTION_KEY_GENERATION_ALGORITHM_NAME = "AES";
@@ -54,6 +60,16 @@ public class CryptoService {
      * String provided to decrypt().
      */
     private static final String DECRYPTION_CIPHER_NAME = "AES/CBC/PKCS5Padding";
+
+    /**
+     * The name of the key generation algorithm used for verifying signatures.
+     */
+    private static final String SIGNATURE_KEY_GENERATION_ALGORITHM_NAME = "HmacSHA256";
+
+    /**
+     * The name of the MAC algorithm used for verifying signatures.
+     */
+    private static final String SIGNATURE_MAC_ALGORITHM_NAME = "HmacSHA256";
 
     /**
      * IV which is all null bytes (all binary zeroes). Usually, using a null IV
@@ -83,6 +99,24 @@ public class CryptoService {
      */
     public SecretKey createEncryptionKey(byte[] keyBytes) {
         return new SecretKeySpec(keyBytes, DECRYPTION_KEY_GENERATION_ALGORITHM_NAME);
+    }
+
+    /**
+     * Creates a new key suitable for signature verification using the provided
+     * raw key bytes. The algorithm used to generate this key is dictated by
+     * SIGNATURE_KEY_GENERATION_ALGORITHM_NAME and must match the algorithm
+     * used by sign().
+     *
+     * @param keyBytes
+     *     The raw bytes from which the signature verification key should be
+     *     generated.
+     *
+     * @return
+     *     A new key suitable for signature verification, generated from the
+     *     given bytes.
+     */
+    public SecretKey createSignatureKey(byte[] keyBytes) {
+        return new SecretKeySpec(keyBytes, SIGNATURE_KEY_GENERATION_ALGORITHM_NAME);
     }
 
     /**
@@ -134,6 +168,50 @@ public class CryptoService {
             throw new GuacamoleServerException(e);
         }
         catch (BadPaddingException e) {
+            throw new GuacamoleServerException(e);
+        }
+
+    }
+
+    /**
+     * Signs the given arbitrary data using the provided key, returning the
+     * resulting signature. If any error occurs during signing at all, a
+     * GuacamoleException is thrown.
+     *
+     * @param key
+     *     The key to use to sign the provided data.
+     *
+     * @param data
+     *     The arbitrary data to sign.
+     *
+     * @return
+     *     The signature which results from signing the arbitrary data with the
+     *     provided key.
+     *
+     * @throws GuacamoleException
+     *     If any error at all occurs during signing.
+     */
+    public byte[] sign(Key key, byte[] data) throws GuacamoleException {
+
+        try {
+
+            // Init MAC for signing using secret key
+            Mac mac = Mac.getInstance(SIGNATURE_MAC_ALGORITHM_NAME);
+            mac.init(key);
+
+            // Sign provided data
+            return mac.doFinal(data);
+
+        }
+
+        // Rethrow all signature failures identically
+        catch (NoSuchAlgorithmException e) {
+            throw new GuacamoleServerException(e);
+        }
+        catch (InvalidKeyException e) {
+            throw new GuacamoleServerException(e);
+        }
+        catch (IllegalStateException e) {
             throw new GuacamoleServerException(e);
         }
 
