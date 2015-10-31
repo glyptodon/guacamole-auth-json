@@ -23,7 +23,6 @@
 package org.glyptodon.guacamole.auth.json;
 
 import com.google.inject.Inject;
-import javax.crypto.SecretKey;
 import org.glyptodon.guacamole.GuacamoleException;
 import org.glyptodon.guacamole.environment.Environment;
 
@@ -44,7 +43,7 @@ public class ConfigurationService {
     /**
      * The encryption key to use for all decryption.
      */
-    private static final SecretKeyProperty JSON_ENCRYPTION_KEY = new SecretKeyProperty() {
+    private static final ByteArrayProperty JSON_ENCRYPTION_KEY = new ByteArrayProperty() {
 
         @Override
         public String getName() {
@@ -66,7 +65,7 @@ public class ConfigurationService {
      *     If guacamole.properties cannot be parsed, or if the
      *     "json-encryption-key" property is missing.
      */
-    public SecretKey getEncryptionKey() throws GuacamoleException {
+    public byte[] getEncryptionKey() throws GuacamoleException {
         return environment.getRequiredProperty(JSON_ENCRYPTION_KEY);
     }
 

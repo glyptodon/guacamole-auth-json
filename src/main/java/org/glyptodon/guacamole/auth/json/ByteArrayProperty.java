@@ -22,47 +22,35 @@
 
 package org.glyptodon.guacamole.auth.json;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 import org.glyptodon.guacamole.GuacamoleException;
 import org.glyptodon.guacamole.GuacamoleServerException;
 import org.glyptodon.guacamole.properties.GuacamoleProperty;
 
 /**
- * A GuacamoleProperty whose value is a SecretKey. The key will be generated
- * using the AES key generation algorithm from the decoded bytes of the hex-
- * encoded value of the property.
+ * A GuacamoleProperty whose value is a byte array. The bytes of the byte array
+ * must be represented as a hexadecimal string within the property value. The
+ * hexadecimal string is case-insensitive.
  *
  * @author Michael Jumper
  */
-public abstract class SecretKeyProperty implements GuacamoleProperty<SecretKey> {
-
-    /**
-     * The name of the key generation algorithm used by this property.
-     */
-    public static final String KEY_ALGORITHM = "AES";
+public abstract class ByteArrayProperty implements GuacamoleProperty<byte[]> {
 
     @Override
-    public SecretKey parseValue(String value) throws GuacamoleException {
+    public byte[] parseValue(String value) throws GuacamoleException {
 
         // If no property provided, return null.
         if (value == null)
             return null;
 
+        // Return value parsed from hex
         try {
-
-            // Read value as hex
-            byte[] keyBytes = DatatypeConverter.parseHexBinary(value);
-
-            // Return parsed key
-            return new SecretKeySpec(keyBytes, KEY_ALGORITHM);
-
+            return DatatypeConverter.parseHexBinary(value);
         }
 
         // Fail parse if hex invalid
         catch (IllegalArgumentException e) {
-            throw new GuacamoleServerException("Invalid hexadecimal value for key.", e);
+            throw new GuacamoleServerException("Invalid hexadecimal value.", e);
         }
 
     }

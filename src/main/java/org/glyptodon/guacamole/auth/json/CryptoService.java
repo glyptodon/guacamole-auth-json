@@ -30,7 +30,9 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import org.glyptodon.guacamole.GuacamoleException;
 import org.glyptodon.guacamole.GuacamoleServerException;
 
@@ -41,6 +43,11 @@ import org.glyptodon.guacamole.GuacamoleServerException;
  * @author Michael Jumper
  */
 public class CryptoService {
+
+    /**
+     * The name of the key generation algorithm used for decryption.
+     */
+    private static final String DECRYPTION_KEY_GENERATION_ALGORITHM_NAME = "AES";
 
     /**
      * The name of the cipher transformation that should be used to decrypt any
@@ -59,6 +66,24 @@ public class CryptoService {
         0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0
     });
+
+    /**
+     * Creates a new key suitable for decryption using the provided raw key
+     * bytes. The algorithm used to generate this key is dictated by
+     * DECRYPTION_KEY_GENERATION_ALGORITHM_NAME and must match the algorithm
+     * used by decrypt().
+     *
+     * @param keyBytes
+     *     The raw bytes from which the encryption/decryption key should be
+     *     generated.
+     *
+     * @return
+     *     A new key suitable for encryption or decryption, generated from the
+     *     given bytes.
+     */
+    public SecretKey createEncryptionKey(byte[] keyBytes) {
+        return new SecretKeySpec(keyBytes, DECRYPTION_KEY_GENERATION_ALGORITHM_NAME);
+    }
 
     /**
      * Decrypts the given ciphertext using the provided key, returning the

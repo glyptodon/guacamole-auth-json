@@ -123,7 +123,7 @@ public class UserDataService {
 
             // Decrypt using defined encryption key
             byte[] decrypted = cryptoService.decrypt(
-                confService.getEncryptionKey(),
+                cryptoService.createEncryptionKey(confService.getEncryptionKey()),
                 DatatypeConverter.parseBase64Binary(base64)
             );
 
