@@ -25,6 +25,7 @@ package org.glyptodon.guacamole.auth.json.user;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -86,7 +87,10 @@ public class UserDataService {
 
     /**
      * The name of the HTTP parameter from which base64-encoded, encrypted JSON
-     * data should be read.
+     * data should be read. The value of this parameter, when decoded and
+     * decrypted, must be valid JSON prepended with the 32-byte raw binary
+     * signature generated through signing the JSON with the secret key using
+     * HMAC/SHA-256.
      */
     public static final String ENCRYPTED_DATA_PARAMETER = "data";
 
@@ -123,12 +127,34 @@ public class UserDataService {
 
             // Decrypt using defined encryption key
             byte[] decrypted = cryptoService.decrypt(
-                cryptoService.createEncryptionKey(confService.getEncryptionKey()),
+                cryptoService.createEncryptionKey(confService.getSecretKey()),
                 DatatypeConverter.parseBase64Binary(base64)
             );
 
+            // Abort if decrypted value cannot possibly have a signature AND data
+            if (decrypted.length <= CryptoService.SIGNATURE_LENGTH) {
+                logger.warn("Submitted data is too small to contain both a signature and JSON.");
+                return null;
+            }
+
+            // Split data into signature and JSON portions
+            byte[] receivedSignature = Arrays.copyOf(decrypted, CryptoService.SIGNATURE_LENGTH);
+            byte[] receivedJSON = Arrays.copyOfRange(decrypted, CryptoService.SIGNATURE_LENGTH, decrypted.length);
+
+            // Produce signature for decrypted data
+            byte[] correctSignature = cryptoService.sign(
+                cryptoService.createSignatureKey(confService.getSecretKey()),
+                receivedJSON
+            );
+
+            // Verify signatures
+            if (!Arrays.equals(receivedSignature, correctSignature)) {
+                logger.warn("Signature of submitted data is incorrect.");
+                return null;
+            }
+
             // Convert from UTF-8
-            json = new String(decrypted, "UTF-8");
+            json = new String(receivedJSON, "UTF-8");
 
         }
 

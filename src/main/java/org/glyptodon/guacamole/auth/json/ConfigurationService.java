@@ -41,32 +41,32 @@ public class ConfigurationService {
     private Environment environment;
 
     /**
-     * The encryption key to use for all decryption.
+     * The encryption key to use for all decryption and signature verification.
      */
-    private static final ByteArrayProperty JSON_ENCRYPTION_KEY = new ByteArrayProperty() {
+    private static final ByteArrayProperty JSON_SECRET_KEY = new ByteArrayProperty() {
 
         @Override
         public String getName() {
-            return "json-encryption-key";
+            return "json-secret-key";
         }
 
     };
 
     /**
-     * Returns the symmetric encryption key which will be used to encrypt all
-     * JSON data and should be used to decrypt any received JSON data. This is
-     * dictated by the "json-encryption-key" property specified within
-     * guacamole.properties.
+     * Returns the symmetric key which will be used to encrypt and sign all
+     * JSON data and should be used to decrypt and verify any received JSON
+     * data. This is dictated by the "json-secret-key" property specified
+     * within guacamole.properties.
      *
      * @return
      *     The key which should be used to decrypt received JSON data.
      *
      * @throws GuacamoleException
      *     If guacamole.properties cannot be parsed, or if the
-     *     "json-encryption-key" property is missing.
+     *     "json-secret-key" property is missing.
      */
-    public byte[] getEncryptionKey() throws GuacamoleException {
-        return environment.getRequiredProperty(JSON_ENCRYPTION_KEY);
+    public byte[] getSecretKey() throws GuacamoleException {
+        return environment.getRequiredProperty(JSON_SECRET_KEY);
     }
 
 }
