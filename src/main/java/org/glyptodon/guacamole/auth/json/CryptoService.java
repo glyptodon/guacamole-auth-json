@@ -22,6 +22,7 @@
 
 package org.glyptodon.guacamole.auth.json;
 
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -29,6 +30,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
 import org.glyptodon.guacamole.GuacamoleException;
 import org.glyptodon.guacamole.GuacamoleServerException;
 
@@ -47,9 +49,22 @@ public class CryptoService {
     private static final String DECRYPTION_CIPHER_NAME = "AES/CBC/PKCS5Padding";
 
     /**
+     * IV which is all null bytes (all binary zeroes). Usually, using a null IV
+     * is a horrible idea. As our plaintext will always be prepended with the
+     * HMAC signature of the rest of the message, we are effectively using the
+     * HMAC signature itself as the IV. For our purposes, where the encrypted
+     * value becomes an authentication token, this is OK.
+     */
+    private static final IvParameterSpec NULL_IV = new IvParameterSpec(new byte[] {
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0
+    });
+
+    /**
      * Decrypts the given ciphertext using the provided key, returning the
      * resulting plaintext. If any error occurs during decryption at all, a
-     * GuacamoleException is thrown.
+     * GuacamoleException is thrown. The IV used for the decryption process is
+     * a null IV (all binary zeroes).
      *
      * @param key
      *     The key to use to decrypt the provided ciphertext.
@@ -70,7 +85,7 @@ public class CryptoService {
 
             // Init cipher for descryption using secret key
             Cipher cipher = Cipher.getInstance(DECRYPTION_CIPHER_NAME);
-            cipher.init(Cipher.DECRYPT_MODE, key);
+            cipher.init(Cipher.DECRYPT_MODE, key, NULL_IV);
 
             // Perform decryption
             return cipher.doFinal(cipherText);
@@ -78,6 +93,9 @@ public class CryptoService {
         }
 
         // Rethrow all decryption failures identically
+        catch (InvalidAlgorithmParameterException e) {
+            throw new GuacamoleServerException(e);
+        }
         catch (NoSuchAlgorithmException e) {
             throw new GuacamoleServerException(e);
         }
