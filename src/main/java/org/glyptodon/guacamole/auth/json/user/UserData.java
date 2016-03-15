@@ -22,7 +22,10 @@
 
 package org.glyptodon.guacamole.auth.json.user;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
@@ -49,7 +52,7 @@ public class UserData {
      * All connections accessible by this user. The key of each entry is both
      * the connection identifier and the connection name.
      */
-    private Map<String, Connection> connections;
+    private ConcurrentMap<String, Connection> connections;
 
     /**
      * The data associated with a Guacamole connection stored within a UserData
@@ -72,6 +75,13 @@ public class UserData {
          * http://guac-dev.org/doc/gug/configuring-guacamole.html#connection-configuration
          */
         private Map<String, String> parameters;
+
+        /**
+         * Whether this connection can only be used once. If set to true, the
+         * connection will be removed from the connections directory
+         * immediately upon use.
+         */
+        private boolean singleUse = false;
 
         /**
          * Returns the protocol that this connection should use, such as "vnc"
@@ -121,6 +131,39 @@ public class UserData {
          */
         public void setParameters(Map<String, String> parameters) {
             this.parameters = parameters;
+        }
+
+        /**
+         * Returns whether this connection is intended for single-use only. A
+         * single-use connection cannot be used more than once.
+         *
+         * After a single-use connection is used, it should be automatically
+         * and atomically removed from any underlying data (such as with
+         * UserData.removeConnection()).
+         *
+         * @return
+         *     true if this connection is intended for single-use only, false
+         *     otherwise.
+         */
+        public boolean isSingleUse() {
+            return singleUse;
+        }
+
+        /**
+         * Sets whether this connection is intended for single-use only. A
+         * single-use connection cannot be used more than once. By default,
+         * connections are NOT single-use.
+         *
+         * After a single-use connection is used, it should be automatically
+         * and atomically removed from any underlying data (such as with
+         * UserData.removeConnection()).
+         *
+         * @param singleUse
+         *     true if this connection is intended for single-use only, false
+         *     otherwise.
+         */
+        public void setSingleUse(boolean singleUse) {
+            this.singleUse = singleUse;
         }
 
     }
@@ -179,18 +222,18 @@ public class UserData {
     }
 
     /**
-     * Returns all connections stored within this UserData object. Each of
-     * these connections is accessible by the user specified by getUsername().
-     * The key of each entry within the map is the identifier and human-readable
-     * name of the corresponding connection.
+     * Returns all connections stored within this UserData object as an
+     * unmodifiable map. Each of these connections is accessible by the user
+     * specified by getUsername(). The key of each entry within the map is the
+     * identifier and human-readable name of the corresponding connection.
      *
      * @return
-     *     A map of all connections stored within this UserData object, where
-     *     the key of each entry is the identifier of the corresponding
-     *     connection.
+     *     An unmodifiable map of all connections stored within this
+     *     UserData object, where the key of each entry is the identifier of
+     *     the corresponding connection.
      */
     public Map<String, Connection> getConnections() {
-        return connections;
+        return Collections.unmodifiableMap(connections);
     }
 
     /**
@@ -205,7 +248,23 @@ public class UserData {
      *     connection.
      */
     public void setConnections(Map<String, Connection> connections) {
-        this.connections = connections;
+        this.connections = new ConcurrentHashMap<String, Connection>(connections);
+    }
+
+    /**
+     * Removes the connection having the given identifier from the overall map
+     * of connections, such that it cannot be used further. This operation is
+     * atomic.
+     *
+     * @param identifier
+     *     The identifier of the connection to remove.
+     *
+     * @return
+     *     The connection that was removed, or null if no such connection
+     *     exists.
+     */
+    public Connection removeConnection(String identifier) {
+        return connections.remove(identifier);
     }
 
     /**
