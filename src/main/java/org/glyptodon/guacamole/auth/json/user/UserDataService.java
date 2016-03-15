@@ -41,12 +41,10 @@ import org.glyptodon.guacamole.net.auth.ConnectionGroup;
 import org.glyptodon.guacamole.net.auth.Credentials;
 import org.glyptodon.guacamole.net.auth.Directory;
 import org.glyptodon.guacamole.net.auth.User;
-import org.glyptodon.guacamole.net.auth.simple.SimpleConnection;
 import org.glyptodon.guacamole.net.auth.simple.SimpleConnectionGroup;
 import org.glyptodon.guacamole.net.auth.simple.SimpleConnectionGroupDirectory;
 import org.glyptodon.guacamole.net.auth.simple.SimpleDirectory;
 import org.glyptodon.guacamole.net.auth.simple.SimpleUser;
-import org.glyptodon.guacamole.protocol.GuacamoleConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -332,21 +330,12 @@ public class UserDataService {
             String identifier = entry.getKey();
             UserData.Connection connection = entry.getValue();
 
-            // Create new configuration for given protocol
-            GuacamoleConfiguration config = new GuacamoleConfiguration();
-            config.setProtocol(connection.getProtocol());
-
-            // Add all parameter name/value pairs
-            Map<String, String> parameters = connection.getParameters();
-            if (parameters != null)
-                config.setParameters(parameters);
-
             // Create Guacamole connection containing the defined identifier
             // and parameters
-            Connection guacConnection = new SimpleConnection(
+            Connection guacConnection = new UserDataConnection(
+                userData,
                 identifier,
-                identifier,
-                config
+                connection
             );
 
             // All connections are within the root group
