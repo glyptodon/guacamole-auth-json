@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.DatatypeConverter;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.glyptodon.guacamole.GuacamoleException;
+import org.glyptodon.guacamole.auth.json.RequestValidationService;
 import org.glyptodon.guacamole.auth.json.ConfigurationService;
 import org.glyptodon.guacamole.auth.json.CryptoService;
 import org.glyptodon.guacamole.net.auth.Connection;
@@ -71,6 +72,12 @@ public class UserDataService {
      */
     @Inject
     private ConfigurationService confService;
+
+    /**
+     * Service for testing the validity of HTTP requests.
+     */
+    @Inject
+    private RequestValidationService requestService;
 
     /**
      * Service for handling cryptography-related operations.
@@ -111,6 +118,10 @@ public class UserDataService {
         // Pull HTTP request, if available
         HttpServletRequest request = credentials.getRequest();
         if (request == null)
+            return null;
+
+        // Abort if the request itself is not allowed
+        if (!requestService.isAuthenticationAllowed(request))
             return null;
 
         // Pull base64-encoded, encrypted JSON data from HTTP request, if any

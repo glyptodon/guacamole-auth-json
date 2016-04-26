@@ -79,6 +79,7 @@ public class JSONAuthenticationProviderModule extends AbstractModule {
         // Bind JSON-specific services
         bind(ConfigurationService.class);
         bind(CryptoService.class);
+        bind(RequestValidationService.class);
 
     }
 
