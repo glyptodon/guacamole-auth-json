@@ -25,17 +25,18 @@ package org.glyptodon.guacamole.auth.json.user;
 import com.google.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
-import org.glyptodon.guacamole.GuacamoleException;
-import org.glyptodon.guacamole.form.Form;
-import org.glyptodon.guacamole.net.auth.ActiveConnection;
-import org.glyptodon.guacamole.net.auth.AuthenticationProvider;
-import org.glyptodon.guacamole.net.auth.Connection;
-import org.glyptodon.guacamole.net.auth.ConnectionGroup;
-import org.glyptodon.guacamole.net.auth.ConnectionRecordSet;
-import org.glyptodon.guacamole.net.auth.Directory;
-import org.glyptodon.guacamole.net.auth.User;
-import org.glyptodon.guacamole.net.auth.simple.SimpleConnectionRecordSet;
-import org.glyptodon.guacamole.net.auth.simple.SimpleDirectory;
+import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.form.Form;
+import org.apache.guacamole.net.auth.ActiveConnection;
+import org.apache.guacamole.net.auth.AuthenticationProvider;
+import org.apache.guacamole.net.auth.Connection;
+import org.apache.guacamole.net.auth.ConnectionGroup;
+import org.apache.guacamole.net.auth.ConnectionRecordSet;
+import org.apache.guacamole.net.auth.Directory;
+import org.apache.guacamole.net.auth.SharingProfile;
+import org.apache.guacamole.net.auth.User;
+import org.apache.guacamole.net.auth.simple.SimpleConnectionRecordSet;
+import org.apache.guacamole.net.auth.simple.SimpleDirectory;
 
 /**
  * An implementation of UserContext specific to the JSONAuthenticationProvider
@@ -44,7 +45,7 @@ import org.glyptodon.guacamole.net.auth.simple.SimpleDirectory;
  *
  * @author Michael Jumper
  */
-public class UserContext implements org.glyptodon.guacamole.net.auth.UserContext {
+public class UserContext implements org.apache.guacamole.net.auth.UserContext {
 
     /**
      * Reference to the AuthenticationProvider associated with this
@@ -103,6 +104,12 @@ public class UserContext implements org.glyptodon.guacamole.net.auth.UserContext
     }
 
     @Override
+    public Directory<SharingProfile> getSharingProfileDirectory()
+            throws GuacamoleException {
+        return new SimpleDirectory<SharingProfile>();
+    }
+
+    @Override
     public ConnectionGroup getRootConnectionGroup() throws GuacamoleException {
         return userDataService.getRootConnectionGroup(userData);
     }
@@ -131,6 +138,11 @@ public class UserContext implements org.glyptodon.guacamole.net.auth.UserContext
 
     @Override
     public Collection<Form> getConnectionGroupAttributes() {
+        return Collections.<Form>emptyList();
+    }
+
+    @Override
+    public Collection<Form> getSharingProfileAttributes() {
         return Collections.<Form>emptyList();
     }
 

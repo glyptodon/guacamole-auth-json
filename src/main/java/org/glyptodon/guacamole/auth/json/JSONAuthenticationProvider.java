@@ -25,11 +25,11 @@ package org.glyptodon.guacamole.auth.json;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.glyptodon.guacamole.GuacamoleException;
-import org.glyptodon.guacamole.net.auth.AuthenticatedUser;
-import org.glyptodon.guacamole.net.auth.AuthenticationProvider;
-import org.glyptodon.guacamole.net.auth.Credentials;
-import org.glyptodon.guacamole.net.auth.UserContext;
+import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.net.auth.AuthenticatedUser;
+import org.apache.guacamole.net.auth.AuthenticationProvider;
+import org.apache.guacamole.net.auth.Credentials;
+import org.apache.guacamole.net.auth.UserContext;
 
 /**
  * Allows users to be authenticated using encrypted blobs of JSON data. The
@@ -93,7 +93,8 @@ public class JSONAuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public UserContext updateUserContext(UserContext context,
-            AuthenticatedUser authenticatedUser) throws GuacamoleException {
+            AuthenticatedUser authenticatedUser, Credentials credentials)
+            throws GuacamoleException {
         return context;
     }
 

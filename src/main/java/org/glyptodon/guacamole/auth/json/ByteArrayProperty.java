@@ -23,9 +23,9 @@
 package org.glyptodon.guacamole.auth.json;
 
 import javax.xml.bind.DatatypeConverter;
-import org.glyptodon.guacamole.GuacamoleException;
-import org.glyptodon.guacamole.GuacamoleServerException;
-import org.glyptodon.guacamole.properties.GuacamoleProperty;
+import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.GuacamoleServerException;
+import org.apache.guacamole.properties.GuacamoleProperty;
 
 /**
  * A GuacamoleProperty whose value is a byte array. The bytes of the byte array

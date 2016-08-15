@@ -25,8 +25,8 @@ package org.glyptodon.guacamole.auth.json;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
-import org.glyptodon.guacamole.GuacamoleException;
-import org.glyptodon.guacamole.properties.GuacamoleProperty;
+import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.properties.GuacamoleProperty;
 
 /**
  * A GuacamoleProperty whose value is a List of Strings. The string value

@@ -25,8 +25,8 @@ package org.glyptodon.guacamole.auth.json;
 import com.google.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
-import org.glyptodon.guacamole.GuacamoleException;
-import org.glyptodon.guacamole.environment.Environment;
+import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.environment.Environment;
 
 /**
  * Service for retrieving configuration information regarding the JSON

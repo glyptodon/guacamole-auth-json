@@ -23,12 +23,12 @@
 package org.glyptodon.guacamole.auth.json.user;
 
 import java.util.Map;
-import org.glyptodon.guacamole.GuacamoleException;
-import org.glyptodon.guacamole.GuacamoleSecurityException;
-import org.glyptodon.guacamole.net.GuacamoleTunnel;
-import org.glyptodon.guacamole.net.auth.simple.SimpleConnection;
-import org.glyptodon.guacamole.protocol.GuacamoleClientInformation;
-import org.glyptodon.guacamole.protocol.GuacamoleConfiguration;
+import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.GuacamoleSecurityException;
+import org.apache.guacamole.net.GuacamoleTunnel;
+import org.apache.guacamole.net.auth.simple.SimpleConnection;
+import org.apache.guacamole.protocol.GuacamoleClientInformation;
+import org.apache.guacamole.protocol.GuacamoleConfiguration;
 
 /**
  * Connection implementation which automatically manages related UserData if

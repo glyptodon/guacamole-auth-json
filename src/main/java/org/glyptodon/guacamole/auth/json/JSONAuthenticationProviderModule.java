@@ -23,10 +23,10 @@
 package org.glyptodon.guacamole.auth.json;
 
 import com.google.inject.AbstractModule;
-import org.glyptodon.guacamole.GuacamoleException;
-import org.glyptodon.guacamole.environment.Environment;
-import org.glyptodon.guacamole.environment.LocalEnvironment;
-import org.glyptodon.guacamole.net.auth.AuthenticationProvider;
+import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.environment.Environment;
+import org.apache.guacamole.environment.LocalEnvironment;
+import org.apache.guacamole.net.auth.AuthenticationProvider;
 
 /**
  * Guice module which configures injections specific to the JSON authentication

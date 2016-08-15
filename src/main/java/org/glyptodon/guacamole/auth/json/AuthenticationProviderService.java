@@ -24,14 +24,14 @@ package org.glyptodon.guacamole.auth.json;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.net.auth.Credentials;
+import org.apache.guacamole.net.auth.credentials.CredentialsInfo;
+import org.apache.guacamole.net.auth.credentials.GuacamoleInvalidCredentialsException;
 import org.glyptodon.guacamole.auth.json.user.AuthenticatedUser;
 import org.glyptodon.guacamole.auth.json.user.UserContext;
-import org.glyptodon.guacamole.GuacamoleException;
 import org.glyptodon.guacamole.auth.json.user.UserData;
 import org.glyptodon.guacamole.auth.json.user.UserDataService;
-import org.glyptodon.guacamole.net.auth.Credentials;
-import org.glyptodon.guacamole.net.auth.credentials.CredentialsInfo;
-import org.glyptodon.guacamole.net.auth.credentials.GuacamoleInvalidCredentialsException;
 
 /**
  * Service providing convenience functions for the JSONAuthenticationProvider.
@@ -102,7 +102,7 @@ public class AuthenticationProviderService {
      * @throws GuacamoleException
      *     If the UserContext cannot be created due to an error.
      */
-    public UserContext getUserContext(org.glyptodon.guacamole.net.auth.AuthenticatedUser authenticatedUser)
+    public UserContext getUserContext(org.apache.guacamole.net.auth.AuthenticatedUser authenticatedUser)
             throws GuacamoleException {
 
         // The JSONAuthenticationProvider only provides data for users it has
