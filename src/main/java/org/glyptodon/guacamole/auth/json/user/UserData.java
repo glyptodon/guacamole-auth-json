@@ -233,7 +233,7 @@ public class UserData {
      *     the corresponding connection.
      */
     public Map<String, Connection> getConnections() {
-        return Collections.unmodifiableMap(connections);
+        return connections == null ? null : Collections.unmodifiableMap(connections);
     }
 
     /**
