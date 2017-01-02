@@ -23,6 +23,7 @@
 package org.glyptodon.guacamole.auth.json.user;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
@@ -54,6 +55,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Michael Jumper
  */
+@Singleton
 public class UserDataService {
 
     /**
