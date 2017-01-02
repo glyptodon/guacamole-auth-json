@@ -23,6 +23,7 @@
 package org.glyptodon.guacamole.auth.json.user;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
@@ -54,6 +55,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Michael Jumper
  */
+@Singleton
 public class UserDataService {
 
     /**
@@ -65,6 +67,11 @@ public class UserDataService {
      * ObjectMapper for deserializing UserData objects.
      */
     private static final ObjectMapper mapper = new ObjectMapper();
+
+    /**
+     * Blacklist of single-use user data objects which have already been used.
+     */
+    private final UserDataBlacklist blacklist = new UserDataBlacklist();
 
     /**
      * Service for retrieving configuration information regarding the
@@ -115,6 +122,9 @@ public class UserDataService {
      */
     public UserData fromCredentials(Credentials credentials) {
 
+        String json;
+        byte[] correctSignature;
+
         // Pull HTTP request, if available
         HttpServletRequest request = credentials.getRequest();
         if (request == null)
@@ -131,7 +141,6 @@ public class UserDataService {
             return null;
 
         // Decrypt base64-encoded parameter
-        String json;
         try {
 
             // Decrypt using defined encryption key
@@ -151,7 +160,7 @@ public class UserDataService {
             byte[] receivedJSON = Arrays.copyOfRange(decrypted, CryptoService.SIGNATURE_LENGTH, decrypted.length);
 
             // Produce signature for decrypted data
-            byte[] correctSignature = cryptoService.sign(
+            correctSignature = cryptoService.sign(
                 cryptoService.createSignatureKey(confService.getSecretKey()),
                 receivedJSON
             );
@@ -194,6 +203,10 @@ public class UserDataService {
             // Deserialize UserData, but reject if expired
             UserData userData = mapper.readValue(json, UserData.class);
             if (userData.isExpired())
+                return null;
+
+            // Reject if data is single-use and already present in the blacklist
+            if (userData.isSingleUse() && !blacklist.add(userData, correctSignature))
                 return null;
 
             return userData;

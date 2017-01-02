@@ -27,6 +27,7 @@ import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.environment.Environment;
 import org.apache.guacamole.environment.LocalEnvironment;
 import org.apache.guacamole.net.auth.AuthenticationProvider;
+import org.glyptodon.guacamole.auth.json.user.UserDataService;
 
 /**
  * Guice module which configures injections specific to the JSON authentication
@@ -80,6 +81,7 @@ public class JSONAuthenticationProviderModule extends AbstractModule {
         bind(ConfigurationService.class);
         bind(CryptoService.class);
         bind(RequestValidationService.class);
+        bind(UserDataService.class);
 
     }
 
