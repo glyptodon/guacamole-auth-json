@@ -49,6 +49,13 @@ public class UserData {
     private Long expires;
 
     /**
+     * Whether this data can only be used once. If set to true, reuse of the
+     * associated signed data will not be allowed. This is only valid if the
+     * expiration timestamp has been set.
+     */
+    private boolean singleUse = false;
+
+    /**
      * All connections accessible by this user. The key of each entry is both
      * the connection identifier and the connection name.
      */
@@ -219,6 +226,33 @@ public class UserData {
      */
     public void setExpires(Long expires) {
         this.expires = expires;
+    }
+
+    /**
+     * Returns whether this user data is intended for single-use only.
+     * Single-use data cannot be used more than once. This flag only has
+     * meaning if the data also has an expires timestamp.
+     *
+     * @return
+     *     true if this data is intended for single-use only, false
+     *     otherwise.
+     */
+    public boolean isSingleUse() {
+        return singleUse;
+    }
+
+    /**
+     * Sets whether this user data is intended for single-use only. Single-use
+     * data cannot be used more than once. This flag only has meaning if the
+     * data also has an expires timestamp. By default, user data is NOT
+     * single-use.
+     *
+     * @param singleUse
+     *     true if this data is intended for single-use only, false
+     *     otherwise.
+     */
+    public void setSingleUse(boolean singleUse) {
+        this.singleUse = singleUse;
     }
 
     /**
