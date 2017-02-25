@@ -5,7 +5,7 @@
     <groupId>org.glyptodon.guacamole</groupId>
     <artifactId>guacamole-auth-json</artifactId>
     <packaging>jar</packaging>
-    <version>0.9.10</version>
+    <version>0.9.11</version>
     <name>guacamole-auth-json</name>
     <url>http://guac-dev.org/</url>
 
@@ -57,19 +57,11 @@
 
     <dependencies>
 
-        <!-- Guacamole Java API -->
-        <dependency>
-            <groupId>org.apache.guacamole</groupId>
-            <artifactId>guacamole-common</artifactId>
-            <version>0.9.10-incubating</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- Guacamole Extension API -->
         <dependency>
             <groupId>org.apache.guacamole</groupId>
             <artifactId>guacamole-ext</artifactId>
-            <version>0.9.10-incubating</version>
+            <version>0.9.11-incubating</version>
             <scope>provided</scope>
         </dependency>
 
