@@ -89,6 +89,11 @@ public class UserContext implements org.apache.guacamole.net.auth.UserContext {
     }
 
     @Override
+    public Object getResource() {
+        return null;
+    }
+
+    @Override
     public Directory<User> getUserDirectory() throws GuacamoleException {
         return userDataService.getUserDirectory(userData);
     }
