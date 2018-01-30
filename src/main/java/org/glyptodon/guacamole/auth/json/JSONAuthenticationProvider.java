@@ -103,4 +103,9 @@ public class JSONAuthenticationProvider implements AuthenticationProvider {
         return context;
     }
 
+    @Override
+    public void shutdown() {
+        // Nothing to clean up
+    }
+
 }
