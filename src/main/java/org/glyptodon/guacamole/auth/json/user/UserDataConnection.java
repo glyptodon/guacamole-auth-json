@@ -22,13 +22,20 @@
 
 package org.glyptodon.guacamole.auth.json.user;
 
+import com.google.inject.Inject;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.GuacamoleSecurityException;
 import org.apache.guacamole.net.GuacamoleTunnel;
-import org.apache.guacamole.net.auth.simple.SimpleConnection;
+import org.apache.guacamole.net.auth.Connection;
+import org.apache.guacamole.net.auth.ConnectionRecord;
 import org.apache.guacamole.protocol.GuacamoleClientInformation;
 import org.apache.guacamole.protocol.GuacamoleConfiguration;
+import org.glyptodon.guacamole.auth.json.connection.ConnectionService;
 
 /**
  * Connection implementation which automatically manages related UserData if
@@ -38,51 +45,35 @@ import org.apache.guacamole.protocol.GuacamoleConfiguration;
  *
  * @author Michael Jumper
  */
-public class UserDataConnection extends SimpleConnection {
+public class UserDataConnection implements Connection {
+
+    /**
+     * Service for establishing and managing connections.
+     */
+    @Inject
+    private ConnectionService connectionService;
+
+    /**
+     * A human-readable value which both uniquely identifies this connection
+     * and serves as the connection display name.
+     */
+    private String identifier;
 
     /**
      * The UserData associated with this connection. This UserData will be
      * automatically updated as this connection is used.
      */
-    private final UserData data;
+    private UserData data;
 
     /**
      * The connection entry for this connection within the associated UserData.
      */
-    private final UserData.Connection connection;
+    private UserData.Connection connection;
 
     /**
-     * Generates a new GuacamoleConfiguration from the associated protocol and
-     * parameters of the given UserData.Connection.
-     *
-     * @param connection
-     *     The UserData.Connection whose protocol and parameters should be used
-     *     to construct the new GuacamoleConfiguration.
-     *
-     * @return
-     *     A new GuacamoleConfiguration generated from the associated protocol
-     *     and parameters of the given UserData.Connection.
-     */
-    private static GuacamoleConfiguration getConfiguration(UserData.Connection connection) {
-
-        // Create new configuration for given protocol
-        GuacamoleConfiguration config = new GuacamoleConfiguration();
-        config.setProtocol(connection.getProtocol());
-
-        // Add all parameter name/value pairs
-        Map<String, String> parameters = connection.getParameters();
-        if (parameters != null)
-            config.setParameters(parameters);
-
-        return config;
-
-    }
-
-    /**
-     * Creates a new UserDataConnection which automatically manages the given
-     * UserData as the connection is used. The semantics of single-use
-     * connections will be automatically and atomically enforced, if enabled
-     * for the connection in question.
+     * Initializes this UserDataConnection with the given data, unique
+     * identifier, and connection information. This function MUST be invoked
+     * before any particular UserDataConnection is actually used.
      *
      * @param data
      *     The UserData that this connection should manage.
@@ -94,11 +85,89 @@ public class UserDataConnection extends SimpleConnection {
      * @param connection
      *     The connection data associated with this connection within the given
      *     UserData.
+     *
+     * @return
+     *     A reference to this UserDataConnection.
      */
-    public UserDataConnection(UserData data, String identifier, UserData.Connection connection) {
-        super(identifier, identifier, getConfiguration(connection));
+    public UserDataConnection init(UserData data, String identifier,
+            UserData.Connection connection) {
+
+        this.identifier = identifier;
         this.data = data;
         this.connection = connection;
+
+        return this;
+
+    }
+
+    @Override
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    @Override
+    public void setIdentifier(String identifier) {
+        throw new UnsupportedOperationException("UserDataConnection is immutable.");
+    }
+
+    @Override
+    public String getName() {
+        return identifier;
+    }
+
+    @Override
+    public void setName(String name) {
+        throw new UnsupportedOperationException("UserDataConnection is immutable.");
+    }
+
+    @Override
+    public String getParentIdentifier() {
+        return UserDataService.ROOT_CONNECTION_GROUP;
+    }
+
+    @Override
+    public void setParentIdentifier(String parentIdentifier) {
+        throw new UnsupportedOperationException("UserDataConnection is immutable.");
+    }
+
+    @Override
+    public GuacamoleConfiguration getConfiguration() {
+        return connectionService.getConfiguration(connection);
+    }
+
+    @Override
+    public void setConfiguration(GuacamoleConfiguration config) {
+        throw new UnsupportedOperationException("UserDataConnection is immutable.");
+    }
+
+    @Override
+    public Map<String, String> getAttributes() {
+        return Collections.<String, String>emptyMap();
+    }
+
+    @Override
+    public void setAttributes(Map<String, String> attributes) {
+        throw new UnsupportedOperationException("UserDataConnection is immutable.");
+    }
+
+    @Override
+    public Date getLastActive() {
+        return null;
+    }
+
+    @Override
+    public List<? extends ConnectionRecord> getHistory() throws GuacamoleException {
+        return Collections.<ConnectionRecord>emptyList();
+    }
+
+    @Override
+    public Set<String> getSharingProfileIdentifiers() throws GuacamoleException {
+        return Collections.<String>emptySet();
+    }
+
+    @Override
+    public int getActiveConnections() {
+        return 0;
     }
 
     @Override
@@ -114,7 +183,7 @@ public class UserDataConnection extends SimpleConnection {
         }
 
         // Perform connection operation
-        return super.connect(info);
+        return connectionService.connect(connection, info);
 
     }
 

@@ -23,6 +23,7 @@
 package org.glyptodon.guacamole.auth.json.user;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -91,6 +92,12 @@ public class UserDataService {
      */
     @Inject
     private CryptoService cryptoService;
+
+    /**
+     * Provider for UserDataConnection instances.
+     */
+    @Inject
+    private Provider<UserDataConnection> userDataConnectionProvider;
 
     /**
      * The identifier reserved for the root connection group.
@@ -356,7 +363,7 @@ public class UserDataService {
 
             // Create Guacamole connection containing the defined identifier
             // and parameters
-            Connection guacConnection = new UserDataConnection(
+            Connection guacConnection = userDataConnectionProvider.get().init(
                 userData,
                 identifier,
                 connection
