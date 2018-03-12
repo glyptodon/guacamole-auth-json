@@ -369,9 +369,6 @@ public class UserDataService {
                 connection
             );
 
-            // All connections are within the root group
-            guacConnection.setParentIdentifier(ROOT_CONNECTION_GROUP);
-
             // Add corresponding Connection to directory
             directoryContents.put(identifier, guacConnection);
 
