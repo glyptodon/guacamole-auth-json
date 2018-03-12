@@ -50,6 +50,9 @@ package org.glyptodon.guacamole.auth.json.connection;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.guacamole.GuacamoleException;
@@ -101,6 +104,14 @@ public class ConnectionService {
             new ConcurrentHashMap<String, String>();
 
     /**
+     * Mapping of the connection IDs of joinable connections (as returned via
+     * the Guacamole protocol handshake) to the Collection of tunnels shadowing
+     * those connections.
+     */
+    private final ConcurrentHashMap<String, Collection<GuacamoleTunnel>> shadowers =
+            new ConcurrentHashMap<String, Collection<GuacamoleTunnel>>();
+
+    /**
      * Generates a new GuacamoleConfiguration from the associated protocol and
      * parameters of the given UserData.Connection. If the configuration cannot
      * be generated (because a connection is being joined by that connection is
@@ -142,6 +153,26 @@ public class ConnectionService {
             config.setParameters(parameters);
 
         return config;
+
+    }
+
+    /**
+     * Closes all tunnels within the given connection. If a GuacamoleException
+     * is thrown by any tunnel during closure, that exception is ignored.
+     *
+     * @param tunnels
+     *     The Collection of tunnels to close.
+     */
+    private void closeAll(Collection<GuacamoleTunnel> tunnels) {
+
+        for (GuacamoleTunnel tunnel : tunnels) {
+            try {
+                tunnel.close();
+            }
+            catch (GuacamoleException e) {
+                logger.debug("Failure to close tunnel masked by closeAll().", e);
+            }
+        }
 
     }
 
@@ -209,47 +240,93 @@ public class ConnectionService {
 
         }
 
-        // If the current connection is not being tracked (no ID) just return
-        // a normal, non-tracking tunnel
+        final GuacamoleTunnel tunnel;
+
+        // If the current connection is not being tracked (no ID) just use a
+        // normal, non-tracking tunnel
         final String id = connection.getId();
         if (id == null)
-            return new SimpleGuacamoleTunnel(socket);
+            tunnel = new SimpleGuacamoleTunnel(socket);
 
-        // If the current connection is intended to be tracked (an ID was
-        // provided), but a connection is already in progress with that ID,
-        // log a warning that the original connection will no longer be tracked
-        final String connectionID = socket.getConnectionID();
-        String activeConnection = activeConnections.put(id, connectionID);
-        if (activeConnection != null)
-            logger.warn("A connection with ID \"{}\" is already in progress, "
-                    + "but another attempt to use this ID has been made. The "
-                    + "original connection will no longer be joinable.", id);
+        // Otherwise, create a tunnel with proper tracking which can be joined
+        else {
 
-        // Return a tunnel which automatically tracks the active connection
-        return new SimpleGuacamoleTunnel(new GuacamoleSocket() {
+            // Allow connection to be joined
+            final String connectionID = socket.getConnectionID();
+            final Collection<GuacamoleTunnel> existingTunnels = shadowers.putIfAbsent(connectionID,
+                    Collections.synchronizedList(new ArrayList<GuacamoleTunnel>()));
 
-            @Override
-            public GuacamoleReader getReader() {
-                return socket.getReader();
-            }
+            // Duplicate connection IDs cannot exist
+            assert(existingTunnels == null);
 
-            @Override
-            public GuacamoleWriter getWriter() {
-                return socket.getWriter();
-            }
+            // If the current connection is intended to be tracked (an ID was
+            // provided), but a connection is already in progress with that ID,
+            // log a warning that the original connection will no longer be tracked
+            String activeConnection = activeConnections.put(id, connectionID);
+            if (activeConnection != null)
+                logger.warn("A connection with ID \"{}\" is already in progress, "
+                        + "but another attempt to use this ID has been made. The "
+                        + "original connection will no longer be joinable.", id);
 
-            @Override
-            public void close() throws GuacamoleException {
-                activeConnections.remove(id, connectionID);
-                socket.close();
-            }
+            // Return a tunnel which automatically tracks the active connection
+            tunnel = new SimpleGuacamoleTunnel(new GuacamoleSocket() {
 
-            @Override
-            public boolean isOpen() {
-                return socket.isOpen();
-            }
+                @Override
+                public GuacamoleReader getReader() {
+                    return socket.getReader();
+                }
 
-        });
+                @Override
+                public GuacamoleWriter getWriter() {
+                    return socket.getWriter();
+                }
+
+                @Override
+                public void close() throws GuacamoleException {
+
+                    // Stop connection from being joined further
+                    activeConnections.remove(id, connectionID);
+
+                    // Close all connections sharing the closed connection
+                    Collection<GuacamoleTunnel> tunnels = shadowers.remove(connectionID);
+                    if (tunnels != null)
+                        closeAll(tunnels);
+
+                    socket.close();
+
+                }
+
+                @Override
+                public boolean isOpen() {
+                    return socket.isOpen();
+                }
+
+            });
+
+        }
+
+        // Track tunnels which join connections, such that they can be
+        // automatically closed when the joined connection closes
+        String joinedConnection = config.getConnectionID();
+        if (joinedConnection != null) {
+
+            // Track shadower of joined connection if possible
+            Collection<GuacamoleTunnel> tunnels = shadowers.get(joinedConnection);
+            if (tunnels != null)
+                tunnels.add(tunnel);
+
+            // Close this tunnel in ALL CASES if the joined connection has
+            // closed. Note that it is insufficient to simply check whether the
+            // retrieved Collection is null here, as it may have been removed
+            // after retrieval. We must ensure that the tunnel is closed in any
+            // case where it will not automatically be closed due to the
+            // closure of the shadowed connection.
+            if (!shadowers.containsKey(joinedConnection))
+                tunnel.close();
+
+        }
+
+        return tunnel;
 
     }
 
