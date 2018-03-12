@@ -132,7 +132,15 @@ public class UserDataConnection implements Connection {
 
     @Override
     public GuacamoleConfiguration getConfiguration() {
-        return connectionService.getConfiguration(connection);
+
+        // Generate configuration, using a skeleton configuration if generation
+        // fails
+        GuacamoleConfiguration config = connectionService.getConfiguration(connection);
+        if (config == null)
+            config = new GuacamoleConfiguration();
+
+        return config;
+
     }
 
     @Override

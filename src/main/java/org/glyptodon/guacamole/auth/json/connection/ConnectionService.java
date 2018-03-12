@@ -51,9 +51,9 @@ package org.glyptodon.guacamole.auth.json.connection;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.GuacamoleResourceNotFoundException;
 import org.apache.guacamole.GuacamoleServerException;
 import org.apache.guacamole.environment.Environment;
 import org.apache.guacamole.io.GuacamoleReader;
@@ -102,7 +102,9 @@ public class ConnectionService {
 
     /**
      * Generates a new GuacamoleConfiguration from the associated protocol and
-     * parameters of the given UserData.Connection.
+     * parameters of the given UserData.Connection. If the configuration cannot
+     * be generated (because a connection is being joined by that connection is
+     * not actually active), null is returned.
      *
      * @param connection
      *     The UserData.Connection whose protocol and parameters should be used
@@ -110,7 +112,8 @@ public class ConnectionService {
      *
      * @return
      *     A new GuacamoleConfiguration generated from the associated protocol
-     *     and parameters of the given UserData.Connection.
+     *     and parameters of the given UserData.Connection, or null if the
+     *     configuration cannot be generated.
      */
     public GuacamoleConfiguration getConfiguration(UserData.Connection connection) {
 
@@ -120,11 +123,10 @@ public class ConnectionService {
         String primaryConnection = connection.getPrimaryConnection();
         if (primaryConnection != null) {
 
-            // If no such active connection actually exists, allow things to
-            // fail cleanly by using a non-existent connection ID
+            // Verify that the connection being joined actually exists
             String id = activeConnections.get(primaryConnection);
             if (id == null)
-                id = UUID.randomUUID().toString();
+                return null;
 
             config.setConnectionID(id);
 
@@ -172,16 +174,24 @@ public class ConnectionService {
         String hostname = proxyConfig.getHostname();
         int port = proxyConfig.getPort();
 
-        final ConfiguredGuacamoleSocket socket;
+        // Generate and verify connection configuration
+        GuacamoleConfiguration config = getConfiguration(connection);
+        if (config == null) {
+            logger.debug("Configuration for connection could not be "
+                    + "generated. Perhaps the connection being joined is not "
+                    + "active?");
+            throw new GuacamoleResourceNotFoundException("No such connection");
+        }
 
         // Determine socket type based on required encryption method
+        final ConfiguredGuacamoleSocket socket;
         switch (proxyConfig.getEncryptionMethod()) {
 
             // If guacd requires SSL, use it
             case SSL:
                 socket = new ConfiguredGuacamoleSocket(
                     new SSLGuacamoleSocket(hostname, port),
-                    getConfiguration(connection), info
+                    config, info
                 );
                 break;
 
@@ -189,7 +199,7 @@ public class ConnectionService {
             case NONE:
                 socket = new ConfiguredGuacamoleSocket(
                     new InetGuacamoleSocket(hostname, port),
-                    getConfiguration(connection), info
+                    config, info
                 );
                 break;
 
