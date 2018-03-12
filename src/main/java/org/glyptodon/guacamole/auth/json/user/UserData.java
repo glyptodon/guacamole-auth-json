@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 /**
  * All data associated with a particular user, as parsed from the JSON supplied
@@ -70,9 +71,23 @@ public class UserData {
     public static class Connection {
 
         /**
+         * An arbitrary, opaque, unique ID for this connection. If specified
+         * via the "join" (primaryConnection) property of another connection,
+         * that connection may be used to join this connection.
+         */
+        private String id;
+
+        /**
          * The protocol that this connection should use, such as "vnc" or "rdp".
          */
         private String protocol;
+
+        /**
+         * The opaque ID of the connection being joined (shared), as given with
+         * the "id" property. If specified, the provided protocol is ignored.
+         * This value is exposed via the "join" property within JSON.
+         */
+        private String primaryConnection;
 
         /**
          * Map of all connection parameter values, where each key is the parameter
@@ -89,6 +104,32 @@ public class UserData {
          * immediately upon use.
          */
         private boolean singleUse = false;
+
+        /**
+         * Returns an arbitrary, opaque, unique ID for this connection. If
+         * defined, this ID may be used via the "join" (primaryConnection)
+         * property of another connection to join (share) this connection while
+         * it is in progress.
+         *
+         * @return
+         *    An arbitrary, opaque, unique ID for this connection.
+         */
+        public String getId() {
+            return id;
+        }
+
+        /**
+         * Sets an arbitrary, opaque ID which uniquely identifies this
+         * connection. This ID may be used via the "join" (primaryConnection)
+         * property of another connection to join (share) this connection while
+         * it is in progress.
+         *
+         * @param id
+         *    An arbitrary, opaque, unique ID for this connection.
+         */
+        public void setId(String id) {
+            this.id = id;
+        }
 
         /**
          * Returns the protocol that this connection should use, such as "vnc"
@@ -110,6 +151,32 @@ public class UserData {
          */
         public void setProtocol(String protocol) {
             this.protocol = protocol;
+        }
+
+        /**
+         * Returns the opaque ID of the connection being joined (shared), if
+         * any. If specified, any provided protocol is ignored. This value is
+         * exposed via the "join" property within JSON.
+         *
+         * @return
+         *     The opaque ID of the connection being joined (shared), if any.
+         */
+        @JsonProperty("join")
+        public String getPrimaryConnection() {
+            return primaryConnection;
+        }
+
+        /**
+         * Sets the opaque ID of the connection being joined (shared). If
+         * specified, any provided protocol is ignored. This is exposed via the
+         * "join" property within JSON.
+         *
+         * @param primaryConnection
+         *     The opaque ID of the connection being joined (shared).
+         */
+        @JsonProperty("join")
+        public void setPrimaryConnection(String primaryConnection) {
+            this.primaryConnection = primaryConnection;
         }
 
         /**

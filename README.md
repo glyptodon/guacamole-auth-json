@@ -71,13 +71,29 @@ Property name | Type     | Description
 `expires`     | `number` | The absolute time after which the JSON should no longer be accepted, even if the signature is valid, as a standard UNIX epoch timestamp with millisecond resolution (the number of milliseconds since midnight of January 1, 1970 UTC).
 `connections` | `object` | The set of connections which should be exposed to the user by their corresponding, unique names. If no connections will be exposed to the user, this can simply be an empty object (`{}`).
 
-Each connection defined within each submitted JSON object has the following
-properties:
+Each normal connection defined within each submitted JSON object has the
+following properties:
 
 Property name | Type     | Description
 --------------|----------|------------
+`id`          | `string` | An optional opaque value which uniquely identifies this connection across all other connections which may be active at any given time. This property is only required if you wish to allow the connection to be shared or shadowed.
 `protocol`    | `string` | The internal name of a supported protocol, such as `vnc`, `rdp`, or `ssh`.
 `parameters`  | `object` | An object representing the connection parameter name/value pairs to apply to the connection, as documented in the [Guacamole manual](https://guacamole.apache.org/doc/gug/configuring-guacamole.html#connection-configuration).
+
+Connections which share or shadow other connections use a `join` property
+instead of a `protocol` property, where `join` contains the value of the `id`
+property of the connection being joined:
+
+Property name | Type     | Description
+--------------|----------|------------
+`id`          | `string` | An optional opaque value which uniquely identifies this connection across all other connections which may be active at any given time. This property is only required if you wish to allow the connection to be shared or shadowed. (Yes, a connection which shadows another connection may itself be shadowed.)
+`join`        | `string` | The opaque ID given within the `id` property of the connection being joined (shared / shadowed).
+`parameters`  | `object` | An object representing the connection parameter name/value pairs to apply to the connection, as documented in the [Guacamole manual](https://guacamole.apache.org/doc/gug/configuring-guacamole.html#connection-configuration). Most of the connection configuration is inherited from the connection being joined. In general, the only property relevant to joining connections is `read-only`.
+
+If a connection is configured to join another connection, that connection will
+only be usable if the connection being joined is currently active. If two
+connections are established having the same `id` value, only the last
+connection will be joinable using the given `id`.
 
 Generating encrypted JSON
 -------------------------
