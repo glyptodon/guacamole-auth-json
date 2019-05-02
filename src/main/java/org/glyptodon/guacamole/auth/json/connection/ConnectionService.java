@@ -70,6 +70,7 @@ import org.apache.guacamole.net.auth.GuacamoleProxyConfiguration;
 import org.apache.guacamole.protocol.ConfiguredGuacamoleSocket;
 import org.apache.guacamole.protocol.GuacamoleClientInformation;
 import org.apache.guacamole.protocol.GuacamoleConfiguration;
+import org.apache.guacamole.token.TokenFilter;
 import org.glyptodon.guacamole.auth.json.user.UserData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +102,7 @@ public class ConnectionService {
      * are tracked here.
      */
     private final ConcurrentHashMap<String, String> activeConnections =
-            new ConcurrentHashMap<String, String>();
+            new ConcurrentHashMap<>();
 
     /**
      * Mapping of the connection IDs of joinable connections (as returned via
@@ -109,7 +110,7 @@ public class ConnectionService {
      * those connections.
      */
     private final ConcurrentHashMap<String, Collection<GuacamoleTunnel>> shadowers =
-            new ConcurrentHashMap<String, Collection<GuacamoleTunnel>>();
+            new ConcurrentHashMap<>();
 
     /**
      * Generates a new GuacamoleConfiguration from the associated protocol and
@@ -188,6 +189,10 @@ public class ConnectionService {
      * @param info
      *     Information associated with the connecting client.
      *
+     * @param tokens
+     *     A Map containing the token names and corresponding values to be
+     *     applied as parameter tokens when establishing the connection.
+     *
      * @return
      *     A fully-established GuacamoleTunnel.
      *
@@ -196,7 +201,8 @@ public class ConnectionService {
      *     connect is denied.
      */
     public GuacamoleTunnel connect(UserData.Connection connection,
-            GuacamoleClientInformation info) throws GuacamoleException {
+            GuacamoleClientInformation info, Map<String, String> tokens)
+            throws GuacamoleException {
 
         // Retrieve proxy configuration from environment
         GuacamoleProxyConfiguration proxyConfig = environment.getDefaultGuacamoleProxyConfiguration();
@@ -213,6 +219,9 @@ public class ConnectionService {
                     + "active?");
             throw new GuacamoleResourceNotFoundException("No such connection");
         }
+
+        // Apply parameter tokens to values within configuration
+        new TokenFilter(tokens).filterValues(config.getParameters());
 
         // Determine socket type based on required encryption method
         final ConfiguredGuacamoleSocket socket;
@@ -254,7 +263,7 @@ public class ConnectionService {
             // Allow connection to be joined
             final String connectionID = socket.getConnectionID();
             final Collection<GuacamoleTunnel> existingTunnels = shadowers.putIfAbsent(connectionID,
-                    Collections.synchronizedList(new ArrayList<GuacamoleTunnel>()));
+                    Collections.synchronizedList(new ArrayList<>()));
 
             // Duplicate connection IDs cannot exist
             assert(existingTunnels == null);

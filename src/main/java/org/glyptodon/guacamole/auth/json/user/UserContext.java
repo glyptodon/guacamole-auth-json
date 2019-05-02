@@ -23,22 +23,11 @@
 package org.glyptodon.guacamole.auth.json.user;
 
 import com.google.inject.Inject;
-import java.util.Collection;
-import java.util.Collections;
-import org.apache.guacamole.GuacamoleException;
-import org.apache.guacamole.form.Form;
-import org.apache.guacamole.net.auth.ActiveConnection;
-import org.apache.guacamole.net.auth.ActivityRecord;
-import org.apache.guacamole.net.auth.ActivityRecordSet;
+import org.apache.guacamole.net.auth.AbstractUserContext;
 import org.apache.guacamole.net.auth.AuthenticationProvider;
 import org.apache.guacamole.net.auth.Connection;
-import org.apache.guacamole.net.auth.ConnectionGroup;
-import org.apache.guacamole.net.auth.ConnectionRecord;
 import org.apache.guacamole.net.auth.Directory;
-import org.apache.guacamole.net.auth.SharingProfile;
 import org.apache.guacamole.net.auth.User;
-import org.apache.guacamole.net.auth.simple.SimpleActivityRecordSet;
-import org.apache.guacamole.net.auth.simple.SimpleDirectory;
 
 /**
  * An implementation of UserContext specific to the JSONAuthenticationProvider
@@ -47,7 +36,12 @@ import org.apache.guacamole.net.auth.simple.SimpleDirectory;
  *
  * @author Michael Jumper
  */
-public class UserContext implements org.apache.guacamole.net.auth.UserContext {
+public class UserContext extends AbstractUserContext {
+
+    /**
+     * The identifier reserved for the root connection group.
+     */
+    public static final String ROOT_CONNECTION_GROUP = DEFAULT_ROOT_CONNECTION_GROUP;
 
     /**
      * Reference to the AuthenticationProvider associated with this
@@ -91,77 +85,8 @@ public class UserContext implements org.apache.guacamole.net.auth.UserContext {
     }
 
     @Override
-    public Object getResource() {
-        return null;
-    }
-
-    @Override
-    public Directory<User> getUserDirectory() throws GuacamoleException {
-        return userDataService.getUserDirectory(userData);
-    }
-
-    @Override
     public Directory<Connection> getConnectionDirectory() {
         return userDataService.getConnectionDirectory(userData);
-    }
-
-    @Override
-    public Directory<ConnectionGroup> getConnectionGroupDirectory() {
-        return userDataService.getConnectionGroupDirectory(userData);
-    }
-
-    @Override
-    public Directory<SharingProfile> getSharingProfileDirectory()
-            throws GuacamoleException {
-        return new SimpleDirectory<SharingProfile>();
-    }
-
-    @Override
-    public ConnectionGroup getRootConnectionGroup() throws GuacamoleException {
-        return userDataService.getRootConnectionGroup(userData);
-    }
-
-    @Override
-    public Directory<ActiveConnection> getActiveConnectionDirectory()
-            throws GuacamoleException {
-        return new SimpleDirectory<ActiveConnection>();
-    }
-
-    @Override
-    public ActivityRecordSet<ConnectionRecord> getConnectionHistory()
-            throws GuacamoleException {
-        return new SimpleActivityRecordSet<ConnectionRecord>();
-    }
-
-    @Override
-    public ActivityRecordSet<ActivityRecord> getUserHistory()
-            throws GuacamoleException {
-        return new SimpleActivityRecordSet<ActivityRecord>();
-    }
-
-    @Override
-    public Collection<Form> getUserAttributes() {
-        return Collections.<Form>emptyList();
-    }
-
-    @Override
-    public Collection<Form> getConnectionAttributes() {
-        return Collections.<Form>emptyList();
-    }
-
-    @Override
-    public Collection<Form> getConnectionGroupAttributes() {
-        return Collections.<Form>emptyList();
-    }
-
-    @Override
-    public Collection<Form> getSharingProfileAttributes() {
-        return Collections.<Form>emptyList();
-    }
-
-    @Override
-    public void invalidate() {
-        // Nothing to invalidate
     }
 
 }

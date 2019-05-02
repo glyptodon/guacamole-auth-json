@@ -36,13 +36,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.DatatypeConverter;
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.net.auth.Connection;
-import org.apache.guacamole.net.auth.ConnectionGroup;
 import org.apache.guacamole.net.auth.Credentials;
 import org.apache.guacamole.net.auth.Directory;
 import org.apache.guacamole.net.auth.User;
-import org.apache.guacamole.net.auth.simple.SimpleConnectionGroup;
-import org.apache.guacamole.net.auth.simple.SimpleConnectionGroupDirectory;
+import org.apache.guacamole.net.auth.permission.ObjectPermissionSet;
 import org.apache.guacamole.net.auth.simple.SimpleDirectory;
+import org.apache.guacamole.net.auth.simple.SimpleObjectPermissionSet;
 import org.apache.guacamole.net.auth.simple.SimpleUser;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.glyptodon.guacamole.auth.json.ConfigurationService;
@@ -98,11 +97,6 @@ public class UserDataService {
      */
     @Inject
     private Provider<UserDataConnection> userDataConnectionProvider;
-
-    /**
-     * The identifier reserved for the root connection group.
-     */
-    public static final String ROOT_CONNECTION_GROUP = "ROOT";
 
     /**
      * The name of the HTTP parameter from which base64-encoded, encrypted JSON
@@ -264,43 +258,25 @@ public class UserDataService {
      */
     public User getUser(UserData userData) {
 
-        // Pull username from user data
-        String username = userData.getUsername();
-
         // Build user object with READ access to all available data
-        return new SimpleUser(
-            username,
-            getUserIdentifiers(userData),
-            getConnectionIdentifiers(userData),
-            getConnectionGroupIdentifiers(userData)
-        );
+        return new SimpleUser(userData.getUsername()) {
 
-    }
+            @Override
+            public ObjectPermissionSet getUserPermissions() throws GuacamoleException {
+                return new SimpleObjectPermissionSet(getUserIdentifiers(userData));
+            }
 
-    /**
-     * Returns a Directory containing all users accessible by the user whose
-     * data is given by the provided UserData object. As users of the
-     * JSONAuthenticationProvider can only see themselves, this will always
-     * contain only the user's own user object.
-     *
-     * @param userData
-     *     All data associated with the user whose user directory is being
-     *     retrieved.
-     *
-     * @return
-     *     A Directory containing all users accessible by the user whose data
-     *     is given by the provided UserData object.
-     */
-    public Directory<User> getUserDirectory(UserData userData) {
+            @Override
+            public ObjectPermissionSet getConnectionPermissions() throws GuacamoleException {
+                return new SimpleObjectPermissionSet(getConnectionIdentifiers(userData));
+            }
 
-        // Get own user object
-        User self = getUser(userData);
+            @Override
+            public ObjectPermissionSet getConnectionGroupPermissions() throws GuacamoleException {
+                return new SimpleObjectPermissionSet(getConnectionGroupIdentifiers(userData));
+            }
 
-        // Return directory containing only self
-        return new SimpleDirectory<User>(Collections.singletonMap(
-            self.getIdentifier(),
-            self
-        ));
+        };
 
     }
 
@@ -351,10 +327,10 @@ public class UserDataService {
         // Do not return any connections if empty or expired
         Map<String, UserData.Connection> connections = userData.getConnections();
         if (connections == null || userData.isExpired())
-            return new SimpleDirectory<Connection>();
+            return new SimpleDirectory<>();
 
         // Convert UserData.Connection objects to normal Connections
-        Map<String, Connection> directoryContents = new HashMap<String, Connection>();
+        Map<String, Connection> directoryContents = new HashMap<>();
         for (Map.Entry<String, UserData.Connection> entry : connections.entrySet()) {
 
             // Pull connection and associated identifier
@@ -374,7 +350,7 @@ public class UserDataService {
 
         }
 
-        return new SimpleDirectory<Connection>(directoryContents);
+        return new SimpleDirectory<>(directoryContents);
 
     }
 
@@ -395,53 +371,7 @@ public class UserDataService {
     public Set<String> getConnectionGroupIdentifiers(UserData userData) {
 
         // The only connection group available is the root group
-        return Collections.singleton(ROOT_CONNECTION_GROUP);
-
-    }
-
-    /**
-     * Returns the root connection group, containing all connections defined
-     * within the provided UserData object. If the provided UserData object is
-     * expired, this connection group will be empty.
-     *
-     * @param userData
-     *     All data associated with the user whose root connection group is
-     *     being retrieved.
-     *
-     * @return
-     *     The root connection group.
-     */
-    public ConnectionGroup getRootConnectionGroup(UserData userData) {
-
-        // The root group contains all connections and no groups
-        return new SimpleConnectionGroup(
-            ROOT_CONNECTION_GROUP,
-            ROOT_CONNECTION_GROUP,
-            getConnectionIdentifiers(userData),
-            Collections.<String>emptyList()
-        );
-
-    }
-
-    /**
-     * Returns a Directory containing all connection groups accessible by the
-     * user whose data is given by the provided UserData object. This Directory
-     * will always contain only the root connection group.
-     *
-     * @param userData
-     *     All data associated with the user whose connection group directory
-     *     is being retrieved.
-     *
-     * @return
-     *     A Directory containing all connection groups accessible by the user
-     *     whose data is given by the provided UserData object.
-     */
-    public Directory<ConnectionGroup> getConnectionGroupDirectory(UserData userData) {
-
-        // Expose only the root group in the connection group directory
-        return new SimpleConnectionGroupDirectory(
-            Collections.singleton(getRootConnectionGroup(userData))
-        );
+        return Collections.singleton(UserContext.ROOT_CONNECTION_GROUP);
 
     }
 
