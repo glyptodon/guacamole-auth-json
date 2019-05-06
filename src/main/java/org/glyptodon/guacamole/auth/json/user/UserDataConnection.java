@@ -179,8 +179,8 @@ public class UserDataConnection implements Connection {
     }
 
     @Override
-    public GuacamoleTunnel connect(GuacamoleClientInformation info,
-            Map<String, String> tokens) throws GuacamoleException {
+    public GuacamoleTunnel connect(GuacamoleClientInformation info)
+            throws GuacamoleException {
 
         // Prevent future use immediately upon connect
         if (connection.isSingleUse()) {
@@ -192,7 +192,7 @@ public class UserDataConnection implements Connection {
         }
 
         // Perform connection operation
-        return connectionService.connect(connection, info, tokens);
+        return connectionService.connect(connection, info);
 
     }
 

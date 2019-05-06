@@ -70,7 +70,6 @@ import org.apache.guacamole.net.auth.GuacamoleProxyConfiguration;
 import org.apache.guacamole.protocol.ConfiguredGuacamoleSocket;
 import org.apache.guacamole.protocol.GuacamoleClientInformation;
 import org.apache.guacamole.protocol.GuacamoleConfiguration;
-import org.apache.guacamole.token.TokenFilter;
 import org.glyptodon.guacamole.auth.json.user.UserData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -189,10 +188,6 @@ public class ConnectionService {
      * @param info
      *     Information associated with the connecting client.
      *
-     * @param tokens
-     *     A Map containing the token names and corresponding values to be
-     *     applied as parameter tokens when establishing the connection.
-     *
      * @return
      *     A fully-established GuacamoleTunnel.
      *
@@ -201,8 +196,7 @@ public class ConnectionService {
      *     connect is denied.
      */
     public GuacamoleTunnel connect(UserData.Connection connection,
-            GuacamoleClientInformation info, Map<String, String> tokens)
-            throws GuacamoleException {
+            GuacamoleClientInformation info) throws GuacamoleException {
 
         // Retrieve proxy configuration from environment
         GuacamoleProxyConfiguration proxyConfig = environment.getDefaultGuacamoleProxyConfiguration();
@@ -219,9 +213,6 @@ public class ConnectionService {
                     + "active?");
             throw new GuacamoleResourceNotFoundException("No such connection");
         }
-
-        // Apply parameter tokens to values within configuration
-        new TokenFilter(tokens).filterValues(config.getParameters());
 
         // Determine socket type based on required encryption method
         final ConfiguredGuacamoleSocket socket;
