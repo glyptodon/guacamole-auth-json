@@ -101,7 +101,7 @@ public class ConnectionService {
      * are tracked here.
      */
     private final ConcurrentHashMap<String, String> activeConnections =
-            new ConcurrentHashMap<String, String>();
+            new ConcurrentHashMap<>();
 
     /**
      * Mapping of the connection IDs of joinable connections (as returned via
@@ -109,7 +109,7 @@ public class ConnectionService {
      * those connections.
      */
     private final ConcurrentHashMap<String, Collection<GuacamoleTunnel>> shadowers =
-            new ConcurrentHashMap<String, Collection<GuacamoleTunnel>>();
+            new ConcurrentHashMap<>();
 
     /**
      * Generates a new GuacamoleConfiguration from the associated protocol and
@@ -254,7 +254,7 @@ public class ConnectionService {
             // Allow connection to be joined
             final String connectionID = socket.getConnectionID();
             final Collection<GuacamoleTunnel> existingTunnels = shadowers.putIfAbsent(connectionID,
-                    Collections.synchronizedList(new ArrayList<GuacamoleTunnel>()));
+                    Collections.synchronizedList(new ArrayList<>()));
 
             // Duplicate connection IDs cannot exist
             assert(existingTunnels == null);

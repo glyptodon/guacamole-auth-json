@@ -122,7 +122,7 @@ public class UserDataConnection implements Connection {
 
     @Override
     public String getParentIdentifier() {
-        return UserDataService.ROOT_CONNECTION_GROUP;
+        return UserContext.ROOT_CONNECTION_GROUP;
     }
 
     @Override
@@ -179,7 +179,8 @@ public class UserDataConnection implements Connection {
     }
 
     @Override
-    public GuacamoleTunnel connect(GuacamoleClientInformation info) throws GuacamoleException {
+    public GuacamoleTunnel connect(GuacamoleClientInformation info)
+            throws GuacamoleException {
 
         // Prevent future use immediately upon connect
         if (connection.isSingleUse()) {

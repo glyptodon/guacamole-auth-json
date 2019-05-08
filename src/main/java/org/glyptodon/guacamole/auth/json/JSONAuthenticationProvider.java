@@ -26,8 +26,8 @@ package org.glyptodon.guacamole.auth.json;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.net.auth.AbstractAuthenticationProvider;
 import org.apache.guacamole.net.auth.AuthenticatedUser;
-import org.apache.guacamole.net.auth.AuthenticationProvider;
 import org.apache.guacamole.net.auth.Credentials;
 import org.apache.guacamole.net.auth.UserContext;
 
@@ -40,7 +40,7 @@ import org.apache.guacamole.net.auth.UserContext;
  *
  * @author Michael Jumper
  */
-public class JSONAuthenticationProvider implements AuthenticationProvider {
+public class JSONAuthenticationProvider extends AbstractAuthenticationProvider {
 
     /**
      * Injector which will manage the object graph of this authentication
@@ -69,22 +69,11 @@ public class JSONAuthenticationProvider implements AuthenticationProvider {
     }
 
     @Override
-    public Object getResource() {
-        return null;
-    }
-
-    @Override
     public AuthenticatedUser authenticateUser(Credentials credentials) throws GuacamoleException {
 
         AuthenticationProviderService authProviderService = injector.getInstance(AuthenticationProviderService.class);
         return authProviderService.authenticateUser(credentials);
 
-    }
-
-    @Override
-    public AuthenticatedUser updateAuthenticatedUser(AuthenticatedUser authenticatedUser,
-            Credentials credentials) throws GuacamoleException {
-        return authenticatedUser;
     }
 
     @Override
@@ -94,18 +83,6 @@ public class JSONAuthenticationProvider implements AuthenticationProvider {
         AuthenticationProviderService authProviderService = injector.getInstance(AuthenticationProviderService.class);
         return authProviderService.getUserContext(authenticatedUser);
 
-    }
-
-    @Override
-    public UserContext updateUserContext(UserContext context,
-            AuthenticatedUser authenticatedUser, Credentials credentials)
-            throws GuacamoleException {
-        return context;
-    }
-
-    @Override
-    public void shutdown() {
-        // Nothing to clean up
     }
 
 }
